@@ -1,4 +1,4 @@
-)'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
@@ -15,17 +15,14 @@ export default function HomePage() {
 
   async function loadData() {
     try {
-      // Load cities
       const { data: citiesData } = await supabase
         .from('cities')
         .select('*')
       
-      // Load neighborhoods
       const { data: neighborhoodsData } = await supabase
         .from('neighborhoods')
         .select('*')
       
-      // Load hazards
       const { data: hazardsData } = await supabase
         .from('hazards')
         .select('*')
@@ -58,7 +55,6 @@ export default function HomePage() {
           🎉 Supabase Connected!
         </h1>
 
-        {/* Cities */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <h2 className="text-2xl font-bold mb-4">Cities ({cities.length})</h2>
           <div className="grid grid-cols-3 gap-4">
@@ -81,7 +77,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Neighborhoods */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <h2 className="text-2xl font-bold mb-4">
             Ottawa Neighborhoods ({neighborhoods.length})
@@ -99,7 +94,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Hazards */}
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-2xl font-bold mb-4">
             ⚠️ Hazard Warnings ({hazards.length})
@@ -128,7 +122,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Success message */}
         <div className="mt-8 bg-green-100 border-2 border-green-500 rounded-lg p-6">
           <h3 className="text-xl font-bold text-green-800 mb-2">
             ✅ Database Connection Successful!
