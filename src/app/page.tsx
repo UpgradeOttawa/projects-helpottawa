@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 
 export default function HomePage() {
-  const [cities, setCities] = useState([])
+  const [cities, setCities] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
