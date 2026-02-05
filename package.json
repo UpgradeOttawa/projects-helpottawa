@@ -12,9 +12,9 @@
     "@supabase/supabase-js": "^2.93.3",
     "exifreader": "^4.36.1",
     "leaflet": "^1.9.4",
-    "next": "16.1.6",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
+    "next": "^16.1.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "react-leaflet": "^5.0.0"
   },
   "devDependencies": {
