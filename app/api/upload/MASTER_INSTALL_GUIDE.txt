@@ -1,0 +1,296 @@
+# COMPLETE INSTALLATION GUIDE
+# Ottawa Renovation Photo Upload System
+
+This is a complete, step-by-step guide.
+Follow every step in order.
+Do not skip steps.
+
+================================================================================
+PART 1: INSTALL FILES (5 minutes)
+================================================================================
+
+STEP 1.1: Stop the server
+-------------------------
+In your terminal where "npm run dev" is running:
+Press: Ctrl+C
+Wait until it says "Process terminated" or returns to command prompt.
+
+
+STEP 1.2: Download the 3 production files
+-------------------------
+From Claude's messages above, download these 3 files:
+1. COMPLETE_PROCESSOR.ps1
+2. PRODUCTION_api_route.ts
+3. PRODUCTION_map_page.tsx
+
+Save them to your Downloads folder.
+
+
+STEP 1.3: Install the PowerShell script
+-------------------------
+Source: Downloads\COMPLETE_PROCESSOR.ps1
+Destination: C:\Users\Acer\Desktop\renovation-platform\COMPLETE_PROCESSOR.ps1
+
+Copy the file from Downloads to this exact location.
+
+
+STEP 1.4: Install the API route
+-------------------------
+Source: Downloads\PRODUCTION_api_route.ts
+Destination: C:\Users\Acer\Desktop\projects-helpottawa\app\api\upload\route.ts
+
+IMPORTANT:
+- Navigate to: C:\Users\Acer\Desktop\projects-helpottawa\app\api\upload\
+- DELETE the existing route.ts file
+- Copy PRODUCTION_api_route.ts to this folder
+- RENAME it from "PRODUCTION_api_route.ts" to "route.ts"
+
+The file MUST be named exactly: route.ts
+
+
+STEP 1.5: Install the map page
+-------------------------
+Source: Downloads\PRODUCTION_map_page.tsx
+Destination: C:\Users\Acer\Desktop\projects-helpottawa\app\map\page.tsx
+
+IMPORTANT:
+- Navigate to: C:\Users\Acer\Desktop\projects-helpottawa\app\map\
+- DELETE the existing page.tsx file
+- Copy PRODUCTION_map_page.tsx to this folder
+- RENAME it from "PRODUCTION_map_page.tsx" to "page.tsx"
+
+The file MUST be named exactly: page.tsx
+
+
+STEP 1.6: Verify installation
+-------------------------
+Check that these files exist:
+✓ C:\Users\Acer\Desktop\renovation-platform\COMPLETE_PROCESSOR.ps1
+✓ C:\Users\Acer\Desktop\projects-helpottawa\app\api\upload\route.ts
+✓ C:\Users\Acer\Desktop\projects-helpottawa\app\map\page.tsx
+
+
+================================================================================
+PART 2: PROCESS PHOTOS (10 minutes)
+================================================================================
+
+STEP 2.1: Open PowerShell
+-------------------------
+Press: Windows Key + X
+Click: "Windows PowerShell" or "Terminal"
+
+
+STEP 2.2: Navigate to folder
+-------------------------
+Type this command and press Enter:
+
+cd C:\Users\Acer\Desktop\renovation-platform
+
+
+STEP 2.3: Run the processor script
+-------------------------
+Type this command and press Enter:
+
+powershell -ExecutionPolicy Bypass -File .\COMPLETE_PROCESSOR.ps1
+
+Wait for it to complete.
+
+EXPECTED OUTPUT:
+You should see:
+- "Scanning for photos..."
+- "Found X photos"
+- "Processed X photos with GPS..."
+- "SUCCESS - With GPS: X"
+- "READY TO UPLOAD"
+
+If you see "SUCCESS - With GPS: 0":
+→ Your photos have no GPS data (location services were disabled)
+→ Stop here and tell me
+
+If you see "SUCCESS - With GPS: 100+" (or any number):
+→ GOOD! Continue to next step
+
+
+STEP 2.4: Verify output
+-------------------------
+Check that this folder exists and has files:
+C:\Users\Acer\Desktop\renovation-platform\upload_ready
+
+You should see:
+- .jpg files (your photos)
+- .json files (GPS data)
+
+Both types of files are required for upload.
+
+
+================================================================================
+PART 3: START SERVER (2 minutes)
+================================================================================
+
+STEP 3.1: Open a NEW terminal
+-------------------------
+Press: Windows Key + X
+Click: "Windows PowerShell" or "Terminal"
+(This is separate from the PowerShell where you ran the processor)
+
+
+STEP 3.2: Navigate to project folder
+-------------------------
+Type this command and press Enter:
+
+cd C:\Users\Acer\Desktop\projects-helpottawa
+
+
+STEP 3.3: Start the development server
+-------------------------
+Type this command and press Enter:
+
+npm run dev
+
+Wait until you see:
+"Local: http://localhost:3000"
+
+DO NOT CLOSE THIS TERMINAL.
+Leave it running.
+
+
+================================================================================
+PART 4: UPLOAD PHOTOS (20 minutes for 1000 photos)
+================================================================================
+
+STEP 4.1: Open upload page
+-------------------------
+Open your web browser (Chrome, Firefox, Edge)
+Go to: http://localhost:3000/admin/upload
+
+
+STEP 4.2: Select files
+-------------------------
+1. Click the "Select Files" button
+2. Navigate to: C:\Users\Acer\Desktop\renovation-platform\upload_ready
+3. Press: Ctrl+A (this selects ALL files - both .jpg and .json)
+4. Click: "Open"
+
+IMPORTANT: You must select BOTH .jpg and .json files together.
+
+
+STEP 4.3: Choose room type
+-------------------------
+In the "Room Type" dropdown, select:
+general_renovation
+
+(You can categorize photos later if needed)
+
+
+STEP 4.4: Start upload
+-------------------------
+Click the "Upload" button
+
+You will see:
+- A progress indicator
+- Each photo being uploaded
+- Success/failure messages for each photo
+
+EXPECTED RESULTS:
+- Most photos should show: "✓ GPS source: google_takeout_json"
+- A few might fail - that's OK
+- Upload takes ~1-2 seconds per photo
+
+For 1000 photos, this will take about 20-30 minutes.
+You can leave it running and check back.
+
+
+STEP 4.5: Monitor the terminal
+-------------------------
+While photos are uploading, watch the terminal where "npm run dev" is running.
+
+You should see:
+POST /api/upload 200 in XXXms
+POST /api/upload 200 in XXXms
+...
+
+"200" = success
+"500" = error (some errors are OK, not all photos will work)
+
+If you see ONLY errors (all 500, no 200):
+→ Stop and tell me what the error messages say
+
+
+================================================================================
+PART 5: VIEW MAP (1 minute)
+================================================================================
+
+STEP 5.1: Open map page
+-------------------------
+After uploads complete, go to:
+http://localhost:3000/map
+
+
+STEP 5.2: Verify map display
+-------------------------
+You should see:
+- A map of Ottawa with OpenStreetMap tiles
+- Blue markers showing your photo locations
+- A panel saying "✓ X photos with GPS data"
+
+Click on markers to see photo popups.
+
+
+STEP 5.3: Check console for errors (if map is blank)
+-------------------------
+If the map is black or blank:
+1. Press F12 (opens developer tools)
+2. Click "Console" tab
+3. Look for error messages in red
+4. Send me those error messages
+
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+PROBLEM: PowerShell script says "No photos with GPS found"
+SOLUTION: Your Google Takeout photos don't have GPS data.
+          Location services were disabled when photos were taken.
+          Tell me and we'll discuss alternatives.
+
+PROBLEM: Upload shows "No GPS data in photo"
+SOLUTION: You didn't select the .json files, only the .jpg files.
+          Select ALL files (both .jpg and .json) when uploading.
+
+PROBLEM: Upload shows "Failed to create project"
+SOLUTION: Look at the terminal where npm run dev is running.
+          Copy the error message and send it to me.
+
+PROBLEM: Map is blank/black
+SOLUTION: Press F12, click Console, send me any red error messages.
+
+PROBLEM: Photos appear at wrong locations
+SOLUTION: Check the terminal logs during upload.
+          Send me a few lines showing "GPS from JSON: ..." messages.
+
+================================================================================
+EXPECTED FINAL RESULT
+================================================================================
+
+When everything works:
+✓ PowerShell processed 1000+ photos with GPS
+✓ Upload page uploaded all photos successfully  
+✓ Map shows 1000+ markers clustered by neighborhood
+✓ Clicking markers shows photo popups
+✓ Photos are in correct Ottawa neighborhoods
+
+================================================================================
+WHAT TO TELL ME
+================================================================================
+
+After completing this guide, tell me:
+
+1. How many photos had GPS? (from PowerShell output)
+2. How many uploaded successfully? (from upload page)
+3. How many markers show on the map?
+4. Any error messages you saw
+
+Then I can help debug any issues.
+
+================================================================================

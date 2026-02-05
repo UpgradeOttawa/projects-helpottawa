@@ -1,0 +1,400 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import ExifReader from 'exifreader';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+// ALL 116 Ottawa neighborhoods
+const NEIGHBORHOODS = [
+  { name: "Airport", lat: 45.320214326343624, lng: -75.66667534338372 },
+  { name: "Alta Vista", lat: 45.38891294612635, lng: -75.66090879647709 },
+  { name: "Bayshore", lat: 45.35065291156452, lng: -75.80299562510993 },
+  { name: "Beacon Hill South - Cardinal Heights", lat: 45.441533147787986, lng: -75.60054371827962 },
+  { name: "Beaverbrook", lat: 45.325983306613104, lng: -75.90022983211844 },
+  { name: "Beechwood Cemetery", lat: 45.44707581141547, lng: -75.65954005988004 },
+  { name: "Bells Corners East", lat: 45.32211380065561, lng: -75.8211638437798 },
+  { name: "Bells Corners West", lat: 45.31772960259375, lng: -75.83637921387681 },
+  { name: "Billings Bridge - Huron Park", lat: 45.381233949294106, lng: -75.6755413021385 },
+  { name: "Blackburn Hamlet", lat: 45.43486752070787, lng: -75.56358290295141 },
+  { name: "Blossom Park - Timbermill", lat: 45.35130674173783, lng: -75.62646668714271 },
+  { name: "Borden Farm - Fisher Glen", lat: 45.351555936971, lng: -75.71793427073771 },
+  { name: "Braemar Park - Bel Air Heights - Copeland Park", lat: 45.36208482808773, lng: -75.7551424828815 },
+  { name: "Bridlewood - Emerald Meadows", lat: 45.28705675597687, lng: -75.8542584163153 },
+  { name: "Britannia", lat: 45.3656436487935, lng: -75.7964452314573 },
+  { name: "Brookside - Briarbrook - Morgan's Grant", lat: 45.35121833023168, lng: -75.92572249117022 },
+  { name: "Cardinal Creek", lat: 45.48834517240887, lng: -75.46185826775866 },
+  { name: "Carleton Heights - Courtland Park", lat: 45.36513499452004, lng: -75.70358917596371 },
+  { name: "Carleton University", lat: 45.38573014831558, lng: -75.69675370725129 },
+  { name: "Carlington", lat: 45.37664344352848, lng: -75.73557055271225 },
+  { name: "Carp", lat: 45.34698951788558, lng: -76.03713198730148 },
+  { name: "Carson Grove - Carson Meadows", lat: 45.436788797303365, lng: -75.62232953634373 },
+  { name: "Centrepointe", lat: 45.34119100290574, lng: -75.77041785973474 },
+  { name: "Centretown", lat: 45.41672663442016, lng: -75.69760785498559 },
+  { name: "Chapel Hill North", lat: 45.454842401889394, lng: -75.53607001110123 },
+  { name: "Chapel Hill South", lat: 45.43416897289973, lng: -75.50546579748969 },
+  { name: "Chapman Mills", lat: 45.269036044883755, lng: -75.72031779207605 },
+  { name: "City view", lat: 45.35163747649266, lng: -75.74802760216384 },
+  { name: "Civic Hospital", lat: 45.395158541449504, lng: -75.72192328280164 },
+  { name: "Colonnade Business Park", lat: 45.33534230219639, lng: -75.71459629181649 },
+  { name: "Constance Bay", lat: 45.495509709922125, lng: -76.08470839671 },
+  { name: "Convent Glen - Orléans Woods", lat: 45.477863087522415, lng: -75.53804919723913 },
+  { name: "Corkery", lat: 45.25777548350064, lng: -76.0693452986123 },
+  { name: "Craig Henry - Manordale", lat: 45.32996924818864, lng: -75.76657475688538 },
+  { name: "Crestview - Tanglewood", lat: 45.33927154235717, lng: -75.74040027013987 },
+  { name: "Crystal Bay - Lakeview Park", lat: 45.35282197251308, lng: -75.8494870307556 },
+  { name: "Cumberland", lat: 45.492593387472056, lng: -75.38594860411193 },
+  { name: "Dunrobin", lat: 45.42822693602898, lng: -76.00600112697202 },
+  { name: "Edwards - Carlsbad Springs", lat: 45.34491770374654, lng: -75.47957382733279 },
+  { name: "Elmvale - Canterbury", lat: 45.39301597483849, lng: -75.63079787194015 },
+  { name: "Emerald Woods - Sawmill Creek", lat: 45.34441579821386, lng: -75.64369021631622 },
+  { name: "Experimental Farm", lat: 45.382088207168664, lng: -75.7151678891574 },
+  { name: "Fallingbrook", lat: 45.47752571586377, lng: -75.48460802698182 },
+  { name: "Findlay Creek", lat: 45.315153922554416, lng: -75.6039398981017 },
+  { name: "Fisher Heights", lat: 45.36237689928784, lng: -75.72635477804127 },
+  { name: "Fitzroy", lat: 45.451100609824955, lng: -76.21124508762193 },
+  { name: "Glebe - Dows Lake", lat: 45.40118461665449, lng: -75.69275129527401 },
+  { name: "Glen Cairn", lat: 45.28774127560985, lng: -75.87762411432054 },
+  { name: "Greely", lat: 45.248430499559994, lng: -75.5808766261382 },
+  { name: "Greenbelt East", lat: 45.39815841016496, lng: -75.55618714165007 },
+  { name: "Greenbelt West", lat: 45.32828577996696, lng: -75.832750041262 },
+  { name: "Greenboro East", lat: 45.36771359894873, lng: -75.62913116128036 },
+  { name: "Greenboro West", lat: 45.362480759079844, lng: -75.64091392343992 },
+  { name: "Hawthorne Meadows - Sheffield Glen", lat: 45.39611309649088, lng: -75.61519416417995 },
+  { name: "Hintonburg - Mechanicsville", lat: 45.404792137531686, lng: -75.72596517484584 },
+  { name: "Hunt Club Park", lat: 45.372736493945865, lng: -75.61201210343908 },
+  { name: "Industrial East", lat: 45.39194934997292, lng: -75.6068810006566 },
+  { name: "Iris", lat: 45.35009075508694, lng: -75.77814120483193 },
+  { name: "Island Park - Wellington Village", lat: 45.4017344082801, lng: -75.73981205843259 },
+  { name: "Kanata Lakes", lat: 45.318542818305716, lng: -75.92803247131471 },
+  { name: "Katimavik - Hazeldean", lat: 45.30440643586969, lng: -75.89701479058857 },
+  { name: "Kinburn", lat: 45.36290607463725, lng: -76.18884257530677 },
+  { name: "Laurentian", lat: 45.38052302559126, lng: -75.76047335738923 },
+  { name: "Lebreton Development", lat: 45.41634896171882, lng: -75.71749213142668 },
+  { name: "Ledbury - Heron Gate - Ridgemont", lat: 45.37330209352094, lng: -75.64778252150802 },
+  { name: "Leslie Park - Bruce Farm", lat: 45.335466633509334, lng: -75.79450361334013 },
+  { name: "Lowertown East", lat: 45.43438203845259, lng: -75.68289132368426 },
+  { name: "Lowertown West", lat: 45.43182258874571, lng: -75.69466170972711 },
+  { name: "Manor Park", lat: 45.45142050469492, lng: -75.652381234034 },
+  { name: "Manotick", lat: 45.21878855015173, lng: -75.67297851977125 },
+  { name: "Marlborough", lat: 45.068886633091786, lng: -75.80334695659185 },
+  { name: "Merivale Gardens - Grenfell Glen - Pineglen - Country Place", lat: 45.320798924274634, lng: -75.72613587857492 },
+  { name: "Metcalfe", lat: 45.236137323565224, lng: -75.45187670852786 },
+  { name: "Munster - Ashton", lat: 45.15163613353683, lng: -75.95707400837594 },
+  { name: "Navan - Sarsfield", lat: 45.43620823876735, lng: -75.37301463257272 },
+  { name: "New Edinburgh", lat: 45.44235802730139, lng: -75.68367720039514 },
+  { name: "North Gower - Kars", lat: 45.13626243687078, lng: -75.69394635633893 },
+  { name: "Old Barrhaven East", lat: 45.28419249168918, lng: -75.73813261495354 },
+  { name: "Old Barrhaven West", lat: 45.27495992850791, lng: -75.77776599408551 },
+  { name: "Old Hunt Club", lat: 45.34579687954267, lng: -75.67701847687815 },
+  { name: "Old Ottawa East", lat: 45.409057232064235, lng: -75.67545833804037 },
+  { name: "Old Ottawa South", lat: 45.39201062473239, lng: -75.6842457872331 },
+  { name: "Orléans Industrial", lat: 45.46491911141044, lng: -75.54735977904245 },
+  { name: "Orléans Village - Chateauneuf", lat: 45.46081908983043, lng: -75.51522700808438 },
+  { name: "Osgoode - Vernon", lat: 45.160578425739075, lng: -75.55639647898239 },
+  { name: "Overbrook", lat: 45.426971295405096, lng: -75.6460569801431 },
+  { name: "Parkwood Hills", lat: 45.357757333648394, lng: -75.72153126399431 },
+  { name: "Pineview", lat: 45.42261905062472, lng: -75.60737081611852 },
+  { name: "Playfair Park - Guildwood Estates", lat: 45.38701919767187, lng: -75.64459119499995 },
+  { name: "Portobello South", lat: 45.45289861386497, lng: -75.46503898979093 },
+  { name: "Qualicum - Redwood", lat: 45.340988357248996, lng: -75.80217059573096 },
+  { name: "Queensway Terrace North", lat: 45.357555748381294, lng: -75.78536656849171 },
+  { name: "Queenswood - Chatelaine", lat: 45.49353312598147, lng: -75.50191371363908 },
+  { name: "Queenswood Heights", lat: 45.4725966839561, lng: -75.50589222179525 },
+  { name: "Richmond", lat: 45.21706204787819, lng: -75.84553325092935 },
+  { name: "Rideau Crest - Davidson Heights", lat: 45.28745719510903, lng: -75.70876057593001 },
+  { name: "Riverside Park - Mooney's Bay", lat: 45.371492448584384, lng: -75.68731711100756 },
+  { name: "Riverside Park South - Revelstoke", lat: 45.35814731096632, lng: -75.6834626184362 },
+  { name: "Riverside South - Leitrim", lat: 45.28012056366645, lng: -75.66891047463479 },
+  { name: "Riverview", lat: 45.409718527752375, lng: -75.64280202583889 },
+  { name: "Rockcliffe Park", lat: 45.45216248408962, lng: -75.67602117570725 },
+  { name: "Rothwell Heights - Beacon Hill North", lat: 45.45617503553116, lng: -75.60161014666814 },
+  { name: "Sandy Hill", lat: 45.424312624669845, lng: -75.67746507274924 },
+  { name: "South Keys", lat: 45.358647100184264, lng: -75.65218802320203 },
+  { name: "Stittsville", lat: 45.25973368256876, lng: -75.91796834621935 },
+  { name: "Stittsville East", lat: 45.27469901483303, lng: -75.89339107538734 },
+  { name: "Stittsville North", lat: 45.28368472536599, lng: -75.93092041768001 },
+  { name: "Stonebridge - Half Moon Bay", lat: 45.25092504155429, lng: -75.74161976382938 },
+  { name: "Trend-Arlington", lat: 45.32642903833487, lng: -75.78727989683635 },
+  { name: "Vanier North", lat: 45.43980136801155, lng: -75.66462131195415 },
+  { name: "Vanier South", lat: 45.432793991684285, lng: -75.65956367762952 },
+  { name: "Vars", lat: 45.38121945097477, lng: -75.3330183653716 },
+  { name: "Wateridge Village", lat: 45.454803662353015, lng: -75.63411502016112 },
+  { name: "West Centretown", lat: 45.4066829209558, lng: -75.71025631600115 },
+  { name: "Westboro", lat: 45.392880394585596, lng: -75.74996147842012 },
+  { name: "Whitehaven - Woodpark - Glabar Park", lat: 45.36971085304384, lng: -75.77224680523854 },
+];
+
+const PUBLIC_LOCATIONS = [
+  { name: "Petrie Island Park", lat: 45.4724, lng: -75.4963 },
+  { name: "Orleans Library", lat: 45.4694, lng: -75.5164 },
+  { name: "Chapel Hill Community Centre", lat: 45.4522, lng: -75.5333 },
+  { name: "Fallingbrook Community Centre", lat: 45.4625, lng: -75.5236 },
+  { name: "Convent Glen Park", lat: 45.4786, lng: -75.5372 },
+  { name: "Walter Baker Park", lat: 45.3165, lng: -75.9065 },
+  { name: "Kanata Centrum Community Centre", lat: 45.3089, lng: -75.8967 },
+  { name: "Beaverbrook Library", lat: 45.3260, lng: -75.9002 },
+  { name: "Walter Baker Sports Centre", lat: 45.2737, lng: -75.7485 },
+  { name: "Barrhaven Library", lat: 45.2732, lng: -75.7338 },
+  { name: "Lansdowne Park", lat: 45.3978, lng: -75.6830 },
+  { name: "Ottawa City Hall", lat: 45.4215, lng: -75.6972 },
+  { name: "Library and Archives Canada", lat: 45.4195, lng: -75.7045 },
+];
+
+function extractGPSFromEXIF(buffer: ArrayBuffer) {
+  try {
+    const tags = ExifReader.load(buffer);
+    
+    if (!tags.GPSLatitude || !tags.GPSLongitude) {
+      return null;
+    }
+
+    // EXIF GPS can be in different formats
+    // Try .value first (array format), then .description (string format)
+    const latValue = tags.GPSLatitude.value || tags.GPSLatitude.description;
+    const lngValue = tags.GPSLongitude.value || tags.GPSLongitude.description;
+    const latRef = tags.GPSLatitudeRef?.value || tags.GPSLatitudeRef?.description;
+    const lngRef = tags.GPSLongitudeRef?.value || tags.GPSLongitudeRef?.description;
+
+    const lat = convertGPSCoord(latValue, latRef);
+    const lng = convertGPSCoord(lngValue, lngRef);
+
+    // Check if valid coordinates
+    if (lat === 0 && lng === 0) {
+      return null;
+    }
+
+    return { lat, lng };
+  } catch (error) {
+    return null;
+  }
+}
+
+function convertGPSCoord(coord: any, ref: string | undefined): number {
+  // Handle if coord is already a number
+  if (typeof coord === 'number') {
+    return ref === 'S' || ref === 'W' ? -coord : coord;
+  }
+  
+  // Handle if coord is an array [degrees, minutes, seconds]
+  if (Array.isArray(coord) && coord.length === 3) {
+    const degrees = coord[0];
+    const minutes = coord[1];
+    const seconds = coord[2];
+    let decimal = degrees + minutes / 60 + seconds / 3600;
+    if (ref === 'S' || ref === 'W') decimal = -decimal;
+    return decimal;
+  }
+  
+  // Handle if coord is a string
+  if (typeof coord === 'string') {
+    let match = coord.match(/(\d+)°\s*(\d+)'\s*([\d.]+)"/);
+    if (match) {
+      const degrees = parseFloat(match[1]);
+      const minutes = parseFloat(match[2]);
+      const seconds = parseFloat(match[3]);
+      let decimal = degrees + minutes / 60 + seconds / 3600;
+      if (ref === 'S' || ref === 'W') decimal = -decimal;
+      return decimal;
+    }
+
+    const num = parseFloat(coord);
+    if (!isNaN(num)) {
+      return ref === 'S' || ref === 'W' ? -num : num;
+    }
+  }
+
+  return 0;
+}
+
+function extractGPSFromGoogleTakeoutJSON(jsonText: string) {
+  try {
+    const data = JSON.parse(jsonText);
+    
+    // Google Takeout format
+    if (data.geoData && data.geoData.latitude !== 0 && data.geoData.longitude !== 0) {
+      return {
+        lat: data.geoData.latitude,
+        lng: data.geoData.longitude
+      };
+    }
+    
+    // Alternative format
+    if (data.photoTakenTime && data.photoTakenTime.geoData) {
+      return {
+        lat: data.photoTakenTime.geoData.latitude,
+        lng: data.photoTakenTime.geoData.longitude
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function findNearestNeighborhood(lat: number, lng: number) {
+  let nearest = NEIGHBORHOODS[0];
+  let minDistance = Infinity;
+
+  for (const neighborhood of NEIGHBORHOODS) {
+    const distance = Math.sqrt(
+      Math.pow(lat - neighborhood.lat, 2) + 
+      Math.pow(lng - neighborhood.lng, 2)
+    );
+
+    if (distance < minDistance) {
+      minDistance = distance;
+      nearest = neighborhood;
+    }
+  }
+
+  return nearest;
+}
+
+function jitterToPublicLocation(lat: number, lng: number) {
+  let nearest = PUBLIC_LOCATIONS[0];
+  let minDistance = Infinity;
+
+  for (const location of PUBLIC_LOCATIONS) {
+    const distance = Math.sqrt(
+      Math.pow(lat - location.lat, 2) + 
+      Math.pow(lng - location.lng, 2)
+    );
+
+    if (distance < minDistance) {
+      minDistance = distance;
+      nearest = location;
+    }
+  }
+
+  const offsetLat = (Math.random() - 0.5) * 0.0009;
+  const offsetLng = (Math.random() - 0.5) * 0.0009;
+
+  return {
+    lat: nearest.lat + offsetLat,
+    lng: nearest.lng + offsetLng,
+    publicLocation: nearest.name,
+    originalDistance: minDistance
+  };
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const formData = await request.formData();
+    const file = formData.get('file') as File;
+    const jsonFile = formData.get('jsonFile') as File | null; // Google Takeout JSON
+    const roomType = formData.get('roomType') as string || 'general_renovation';
+
+    if (!file) {
+      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+    }
+
+    const arrayBuffer = await file.arrayBuffer();
+    
+    let gps = null;
+    let source = '';
+
+    // Try Google Takeout JSON first (if provided)
+    if (jsonFile) {
+      const jsonText = await jsonFile.text();
+      gps = extractGPSFromGoogleTakeoutJSON(jsonText);
+      if (gps) source = 'Google Takeout JSON';
+    }
+
+    // Fall back to EXIF
+    if (!gps) {
+      gps = extractGPSFromEXIF(arrayBuffer);
+      if (gps) source = 'EXIF';
+    }
+
+    if (!gps) {
+      return NextResponse.json({ 
+        error: 'No GPS data found. For Google Takeout photos, please upload both the photo and its .json file together.' 
+      }, { status: 400 });
+    }
+
+    const neighborhood = findNearestNeighborhood(gps.lat, gps.lng);
+    const jittered = jitterToPublicLocation(gps.lat, gps.lng);
+
+    const fileName = `${Date.now()}_${file.name}`;
+    const { error: uploadError } = await supabase.storage
+      .from('renovation-photos')
+      .upload(fileName, arrayBuffer, {
+        contentType: file.type
+      });
+
+    if (uploadError) {
+      return NextResponse.json({ error: uploadError.message }, { status: 500 });
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('renovation-photos')
+      .getPublicUrl(fileName);
+
+    const { data: cityData } = await supabase
+      .from('cities')
+      .select('id')
+      .eq('slug', 'ottawa')
+      .single();
+
+    if (!cityData) {
+      return NextResponse.json({ error: 'Ottawa city not found' }, { status: 500 });
+    }
+
+    const { data: project } = await supabase
+      .from('projects')
+      .insert({
+        city_id: cityData.id,
+        gps_lat: jittered.lat,
+        gps_lng: jittered.lng,
+        room_type: roomType,
+        total_photos: 1,
+        status: 'published'
+      })
+      .select()
+      .single();
+
+    if (!project) {
+      return NextResponse.json({ error: 'Failed to create project' }, { status: 500 });
+    }
+
+    const { data: photo, error: photoError } = await supabase
+      .from('photos')
+      .insert({
+        project_id: project.id,
+        filename: file.name,
+        storage_path: publicUrl,
+        gps_lat: jittered.lat,
+        gps_lng: jittered.lng,
+        room_type: roomType,
+        shapes_detected: 0,
+        quality_score: 0.5,
+        complexity_score: 0.5
+      })
+      .select()
+      .single();
+
+    if (photoError) {
+      return NextResponse.json({ error: photoError.message }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      photo,
+      metadata: {
+        originalGPS: gps,
+        gpsSource: source,
+        neighborhood: neighborhood.name,
+        jitteredGPS: { lat: jittered.lat, lng: jittered.lng },
+        publicLocation: jittered.publicLocation
+      }
+    });
+
+  } catch (error: any) {
+    console.error('Upload error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
