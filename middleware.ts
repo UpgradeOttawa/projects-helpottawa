@@ -16,7 +16,9 @@ export function middleware(request: NextRequest) {
 
   if (authHeader) {
     const base64Credentials = authHeader.split(' ')[1] || '';
-    const decoded = Buffer.from(base64Credentials, 'base64').toString('utf-8');
+    // atob (not Buffer) -- middleware runs on the Edge Runtime, which doesn't
+    // support Node's Buffer API. This was the actual bug blocking every login.
+    const decoded = atob(base64Credentials);
     const [, password] = decoded.split(':');
 
     if (password === adminPassword) {
