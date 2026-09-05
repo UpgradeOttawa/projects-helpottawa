@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // Password-gates every /admin route (pages and API) with HTTP Basic Auth.
-// Set ADMIN_PASSWORD in Vercel -> Settings -> Environment Variables.
+// Set ADMIN_PASSWORD in Vercel -> Settings -> Environment Variables (Production checked).
 // Username can be anything; only the password is checked.
-export function middleware(request: NextRequest) {
+//
+// This is proxy.ts, not middleware.ts -- Next.js 16 renamed the convention.
+// The old middleware.ts still built and ran (just deprecated), so it likely
+// wasn't the actual cause of login failing, but this removes it as a variable
+// and matches current Next.js 16 practice going forward.
+export default function proxy(request: NextRequest) {
   const adminPassword = process.env.ADMIN_PASSWORD;
 
   // Fail closed: if no password is configured, block admin access entirely
@@ -16,8 +21,6 @@ export function middleware(request: NextRequest) {
 
   if (authHeader) {
     const base64Credentials = authHeader.split(' ')[1] || '';
-    // atob (not Buffer) -- middleware runs on the Edge Runtime, which doesn't
-    // support Node's Buffer API. This was the actual bug blocking every login.
     const decoded = atob(base64Credentials);
     const [, password] = decoded.split(':');
 
@@ -35,5 +38,6 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  // Matches /admin itself AND every path under it (upload, api routes, etc.)
+  matcher: ['/admin', '/admin/:path*'],
 };
